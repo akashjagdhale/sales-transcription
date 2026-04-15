@@ -1,0 +1,51 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          command_timeout: 10m
+          script: |
+            set -uo pipefail
+            cd /docker/sales-transcriber  # adjust to your VPS deploy path
+            PREV_COMMIT=$(git rev-parse HEAD)
+            PORT=$(grep -oP '^PORT=\K[0-9]+' .env 2>/dev/null || echo 5010)
+
+            rollback() {
+              echo "==> Rolling back to $PREV_COMMIT"
+              git checkout "$PREV_COMMIT"
+              docker compose build --pull
+              docker compose up -d --remove-orphans
+              echo "==> Rollback complete"
+              exit 1
+            }
+
+            git pull origin main || rollback
+            docker compose build --pull || rollback
+            docker compose up -d --remove-orphans || rollback
+            echo "==> sales-transcriber deployed"
+
+            echo "Waiting for container to become healthy on port $PORT..."
+            sleep 10
+            for i in $(seq 1 6); do
+              if curl -sf --max-time 5 "http://localhost:${PORT}/" > /dev/null; then
+                echo "Health check passed"
+                exit 0
+              fi
+              echo "Attempt $i/6 failed, retrying in 5s..."
+              sleep 5
+            done
+            rollback

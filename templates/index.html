@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sales Transcription</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>">
+    <script src="/static/tailwind.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50:  '#FFFBEB',
+                            100: '#FEF3C7',
+                            200: '#FDE68A',
+                            300: '#FCD34D',
+                            400: '#FBBF24',
+                            500: '#F59E0B',
+                            600: '#D97706',
+                            700: '#B45309',
+                        },
+                        surface: {
+                            950: '#09090B',
+                            900: '#0F0F11',
+                            800: '#18181B',
+                            700: '#1E1E22',
+                            600: '#27272A',
+                            500: '#3F3F46',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>* { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }</style>
+    <style>
+        * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
+        body {
+            background-color: #09090B;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(251, 191, 36, 0.08), transparent);
+        }
+
+        .drop-active {
+            border-color: #FBBF24 !important;
+            background-color: rgba(251, 191, 36, 0.06) !important;
+        }
+
+        .card {
+            background: rgba(24, 24, 27, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(63, 63, 70, 0.5);
+        }
+
+        .log-box {
+            font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        .log-box div {
+            padding: 1px 0;
+        }
+
+        .transcript-box {
+            font-size: 15px;
+            line-height: 1.9;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+            border-top-color: #000;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            vertical-align: middle;
+            margin-right: 7px;
+            position: relative;
+            top: -1px;
+        }
+
+        .pulse-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #FBBF24;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Custom scrollbar for dark theme */
+        .log-box::-webkit-scrollbar,
+        .transcript-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        .log-box::-webkit-scrollbar-track,
+        .transcript-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .log-box::-webkit-scrollbar-thumb {
+            background: rgba(251, 191, 36, 0.2);
+            border-radius: 3px;
+        }
+        .log-box::-webkit-scrollbar-thumb:hover {
+            background: rgba(251, 191, 36, 0.4);
+        }
+        .transcript-box::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        .transcript-box::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Glow effect on primary button */
+        .btn-primary {
+            background: linear-gradient(135deg, #FBBF24, #F59E0B);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.25), 0 6px 16px rgba(0, 0, 0, 0.4);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active:not(:disabled) {
+            transform: scale(0.99) translateY(0);
+        }
+        .btn-primary:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Select styling */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a3a3a3' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.25em 1.25em;
+            padding-right: 2rem;
+        }
+
+        /* Step indicator */
+        .step-item { display: flex; align-items: center; gap: 8px; }
+        .step-dot {
+            width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 600;
+            border: 2px solid #3F3F46;
+            color: #71717A;
+            background: transparent;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .step-dot.active {
+            border-color: #FBBF24; color: #FBBF24;
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.2);
+        }
+        .step-dot.done {
+            border-color: #22C55E; background: #22C55E; color: #000;
+        }
+        .step-line {
+            flex: 1; height: 2px; background: #3F3F46;
+            transition: background 0.3s ease;
+        }
+        .step-line.done { background: #22C55E; }
+
+        /* File tabs for multi-file results */
+        .file-tab {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(63, 63, 70, 0.7);
+            color: #71717A;
+            background: transparent;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+            transition: all 0.15s ease;
+        }
+        .file-tab:hover:not(.active) {
+            color: #A1A1AA;
+            border-color: rgba(161, 161, 170, 0.4);
+            background: rgba(63, 63, 70, 0.3);
+        }
+        .file-tab.active {
+            color: #FBBF24;
+            border-color: rgba(251, 191, 36, 0.4);
+            background: rgba(251, 191, 36, 0.08);
+        }
+
+        /* Native diarization speaker turns */
+        .dia-turn {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border-left: 3px solid;
+            margin-bottom: 10px;
+        }
+        .dia-turn .dia-speaker {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 3px;
+        }
+        .dia-turn .dia-time {
+            font-size: 10px;
+            color: #52525B;
+            margin-left: 6px;
+        }
+        .dia-turn .dia-text {
+            font-size: 14px;
+            line-height: 1.65;
+            color: #D4D4D8;
+        }
+
+        /* Smooth card transitions */
+        .card-enter {
+            animation: cardEnter 0.35s ease-out;
+        }
+        @keyframes cardEnter {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Result tabs */
+        .result-tab {
+            color: #71717A;
+            background: transparent;
+        }
+        .result-tab:hover:not(.active) {
+            color: #A1A1AA;
+            background: rgba(63, 63, 70, 0.3);
+        }
+        .result-tab.active {
+            color: #FBBF24;
+            background: rgba(251, 191, 36, 0.1);
+        }
+
+        /* Speaker turn cards */
+        .speaker-turn {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border-left: 3px solid;
+        }
+        .speaker-turn.sales-rep {
+            border-color: #FBBF24;
+            background: rgba(251, 191, 36, 0.04);
+        }
+        .speaker-turn.prospect {
+            border-color: #22C55E;
+            background: rgba(34, 197, 94, 0.04);
+        }
+        .speaker-turn .speaker-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        .speaker-turn.sales-rep .speaker-label { color: #FBBF24; }
+        .speaker-turn.prospect .speaker-label { color: #22C55E; }
+        .speaker-turn .speaker-text {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #D4D4D8;
+        }
+
+        /* Keyword badges */
+        .kw-badge {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            border: 1px solid;
+            margin: 3px;
+        }
+        .kw-badge.competitors { color: #F87171; border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.08); }
+        .kw-badge.pricing     { color: #FBBF24; border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); }
+        .kw-badge.pain_points { color: #C084FC; border-color: rgba(192,132,252,0.3); background: rgba(192,132,252,0.08); }
+        .kw-badge.products    { color: #60A5FA; border-color: rgba(96,165,250,0.3); background: rgba(96,165,250,0.08); }
+        .kw-badge.topics      { color: #A1A1AA; border-color: rgba(161,161,170,0.3); background: rgba(161,161,170,0.08); }
+
+        /* Settings panel toggle animation */
+        .settings-gear-active {
+            color: #FBBF24 !important;
+            border-color: rgba(251, 191, 36, 0.3) !important;
+            background: rgba(251, 191, 36, 0.06) !important;
+        }
+
+        /* Settings section divider */
+        .settings-divider {
+            border-top: 1px solid rgba(63, 63, 70, 0.6);
+            margin: 4px 0;
+        }
+
+        /* Settings section label */
+        .settings-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #52525B;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-white">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-10 border-b border-surface-600/50" style="background: rgba(9, 9, 11, 0.8); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
+        <div class="max-w-2xl mx-auto px-5 py-4 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-brand-400/10 border border-brand-400/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h1 class="text-white font-semibold text-base leading-tight tracking-tight">Sales Transcription</h1>
+                <p id="headerSubtitle" class="text-zinc-500 text-xs mt-0.5">Powered by Sarvam AI</p>
+            </div>
+            <!-- Settings gear -->
+            <button id="settingsToggle" onclick="toggleSettings()"
+                    class="w-9 h-9 rounded-xl border border-surface-500 flex items-center justify-center
+                           text-zinc-500 hover:text-zinc-300 hover:border-zinc-500 hover:bg-surface-700 transition-all flex-shrink-0"
+                    title="Settings">
+                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Settings Panel (collapsible) -->
+        <div id="settingsPanel" class="hidden border-t border-surface-600/50" style="background: rgba(15, 15, 17, 0.95);">
+            <div class="max-w-2xl mx-auto px-5 py-5 space-y-5">
+
+                <!-- ── SECTION 1: TRANSCRIPTION API ── -->
+                <div>
+                    <p class="settings-section-label">Transcription API</p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-medium text-zinc-500 mb-1.5 block">Sarvam AI API Key <span class="text-red-400">*</span></label>
+                            <div class="relative">
+                                <input id="sarvamApiKey" type="password" placeholder="Enter your Sarvam API key…"
+                                       class="w-full text-sm border border-surface-500 rounded-lg px-3 py-2 pr-10 bg-surface-800 text-zinc-300
+                                              focus:outline-none focus:ring-2 focus:ring-brand-400/50 focus:border-brand-400/50
+                                              placeholder:text-zinc-600 font-mono">
+                                <button onclick="toggleSarvamKeyVisibility()" type="button"
+                                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors">
+                                    <svg id="sarvamEyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="text-[11px] text-zinc-600 mt-1">Get your key at <span class="text-zinc-500">console.sarvam.ai</span></p>
+                        </div>
+                        <!-- Diarization toggle -->
+                        <div class="flex items-center justify-between pt-1">
+                            <div>
+                                <label class="text-xs font-medium text-zinc-500">Speaker Diarization</label>
+                                <p class="text-[11px] text-zinc-600">Identify who said what (up to 8 speakers)</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
+                                <input id="diarizationToggle" type="checkbox" class="sr-only peer" onchange="onDiarizationToggleChange()">
+                                <div class="w-10 h-[22px] bg-surface-600 rounded-full peer
+                                            peer-checked:bg-brand-500 transition-colors duration-200
+                                            after:content-[''] after:absolute after:top-[3px] after:left-[3px]
+                                            after:bg-white after:rounded-full after:h-4 after:w-4
+                                            after:transition-transform after:duration-200
+                                            peer-checked:after:translate-x-[18px]"></div>
+                            </label>
+                        </div>
+                        <!-- Num speakers (shown when diarization is on) -->
+                        <div id="numSpeakersGroup" class="hidden">
+                            <label class="text-xs font-medium text-zinc-500 mb-1.5 block">Number of Speakers</label>
+                            <select id="numSpeakers"
+                                    class="w-full text-sm border border-surface-500 rounded-lg px-3 py-2 bg-surface-800 text-zinc-300
+                                           focus:outline-none focus:ring-2 focus:ring-brand-400/50 focus:border-brand-400/50">
+                                <option value="2">2 speakers</option>
+                                <option value="3">3 speakers</option>
+                                <option value="4">4 speakers</option>
+                                <option value="5">5 speakers</option>
+                                <option value="6">6 speakers</option>
+                                <option value="7">7 speakers</option>
+                                <option value="8">8 speakers</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-3 pt-1">
+                            <button onclick="saveTranscriptionSettings()"
+                                    class="text-xs px-4 py-2 rounded-lg bg-brand-400 text-black font-semibold
+                                           hover:bg-brand-300 transition-all">
+                                Save
+                            </button>
+                            <button onclick="clearTranscriptionCredentials()"
+                                    class="text-xs text-zinc-600 hover:text-red-400 transition-colors">
+                                Clear credentials
+                            </button>
+                            <span id="transcriptionSettingsStatus" class="text-[11px] text-zinc-600 hidden"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── DIVIDER ── -->
+                <div class="settings-divider"></div>
+
+                <!-- ── SECTION 2: ANALYSIS API ── -->
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <p class="settings-section-label" style="margin-bottom:2px;">Analysis API</p>
+                            <p class="text-[11px] text-zinc-600">Speaker diarization, summary &amp; keyword detection</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="aiToggle" type="checkbox" class="sr-only peer" onchange="onAiToggleChange()">
+                            <div class="w-10 h-[22px] bg-surface-600 rounded-full peer
+                                        peer-checked:bg-brand-500 transition-colors duration-200
+                                        after:content-[''] after:absolute after:top-[3px] after:left-[3px]
+                                        after:bg-white after:rounded-full after:h-4 after:w-4
+                                        after:transition-transform after:duration-200
+                                        peer-checked:after:translate-x-[18px]"></div>
+                        </label>
+                    </div>
+
+                    <!-- Provider + Key + Model (shown when toggle is ON) -->
+                    <div id="aiSettings" class="hidden space-y-3">
+                        <!-- Provider dropdown -->
+                        <div>
+                            <label class="text-xs font-medium text-zinc-500 mb-1.5 block">Provider</label>
+                            <select id="aiProvider" onchange="onProviderChange()"
+                                    class="w-full text-sm border border-surface-500 rounded-lg px-3 py-2 bg-surface-800 text-zinc-300
+                                           focus:outline-none focus:ring-2 focus:ring-brand-400/50 focus:border-brand-400/50">
+                                <option value="">Select a provider...</option>
+                                <option value="claude">Claude (Anthropic)</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="gemini">Gemini (Google)</option>
+                            </select>
+                        </div>
+
+                        <!-- API Key -->
+                        <div id="apiKeyGroup" class="hidden">
+                            <label class="text-xs font-medium text-zinc-500 mb-1.5 block">API Key</label>
+                            <div class="relative">
+                                <input id="aiApiKey" type="password" placeholder="Enter your API key..."
+                                       class="w-full text-sm border border-surface-500 rounded-lg px-3 py-2 pr-10 bg-surface-800 text-zinc-300
+                                              focus:outline-none focus:ring-2 focus:ring-brand-400/50 focus:border-brand-400/50
+                                              placeholder:text-zinc-600 font-mono">
+                                <button onclick="toggleKeyVisibility()" type="button"
+                                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors">
+                                    <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Model dropdown (populated dynamically) -->
+                        <div id="modelGroup" class="hidden">
+                            <label class="text-xs font-medium text-zinc-500 mb-1.5 block">Model</label>
+                            <div class="flex gap-2">
+                                <select id="aiModel"
+                                        class="flex-1 text-sm border border-surface-500 rounded-lg px-3 py-2 bg-surface-800 text-zinc-300
+                                               focus:outline-none focus:ring-2 focus:ring-brand-400/50 focus:border-brand-400/50">
+                                    <option value="">Enter API key first...</option>
+                                </select>
+                                <button id="fetchModelsBtn" onclick="fetchModels()"
+                                        class="text-xs px-3 py-2 rounded-lg border border-surface-500 text-zinc-400
+                                               hover:text-zinc-200 hover:border-zinc-500 hover:bg-surface-700 transition-all whitespace-nowrap">
+                                    Load Models
+                                </button>
+                            </div>
+                            <p id="modelStatus" class="text-[11px] text-zinc-600 mt-1.5 hidden"></p>
+                        </div>
+
+                        <!-- Save button + status -->
+                        <div class="flex items-center gap-3 pt-1">
+                            <button onclick="saveAiSettings()"
+                                    class="text-xs px-4 py-2 rounded-lg bg-brand-400 text-black font-semibold
+                                           hover:bg-brand-300 transition-all">
+                                Save Settings
+                            </button>
+                            <button onclick="clearAiCredentials()"
+                                    class="text-xs text-zinc-600 hover:text-red-400 transition-colors">
+                                Clear credentials
+                            </button>
+                            <span id="settingsStatus" class="text-[11px] text-zinc-600 hidden"></span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="max-w-2xl mx-auto px-5 py-8 space-y-5">
+
+        <!-- Upload Card -->
+        <div class="card rounded-2xl p-6 card-enter">
+            <h2 class="text-[11px] font-semibold text-zinc-500 uppercase tracking-[0.12em] mb-5">Upload Recording</h2>
+
+            <!-- Drop Zone -->
+            <div id="dropZone"
+                 class="border-2 border-dashed border-surface-500 rounded-xl p-6 sm:p-10 text-center cursor-pointer
+                        transition-all duration-200 hover:border-brand-400/50 hover:bg-brand-400/[0.03]"
+                 onclick="document.getElementById('fileInput').click()">
+                <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-surface-700 border border-surface-500 flex items-center justify-center gap-[3px]">
+                    <span class="w-[3px] h-3 bg-zinc-500 rounded-full"></span>
+                    <span class="w-[3px] h-5 bg-zinc-500 rounded-full"></span>
+                    <span class="w-[3px] h-7 bg-zinc-500 rounded-full"></span>
+                    <span class="w-[3px] h-4 bg-zinc-500 rounded-full"></span>
+                    <span class="w-[3px] h-6 bg-zinc-500 rounded-full"></span>
+                    <span class="w-[3px] h-3 bg-zinc-500 rounded-full"></span>
+                    <span class="w-[3px] h-5 bg-zinc-500 rounded-full"></span>
+                </div>
+                <p id="dropLabel" class="text-sm text-zinc-400">
+                    Drop audio files here, or
+                    <span class="text-brand-400 font-medium">click to select</span>
+                </p>
+                <p class="text-[11px] text-zinc-600 mt-2 tracking-wide font-medium">
+                    .mp3 &nbsp; .wav &nbsp; .m4a &nbsp; .mp4 &nbsp; .webm &nbsp; .ogg &nbsp; .opus &nbsp; .flac &nbsp; .aac &nbsp; .aiff &nbsp; .amr &nbsp; .wma
+                </p>
+                <p class="text-[11px] text-zinc-700 mt-1">Up to 20 files &middot; up to 200 MB each</p>
+            </div>
+            <input id="fileInput" type="file" multiple
+                   accept=".mp3,.wav,.m4a,.mp4,.webm,.ogg,.opus,.flac,.aac,.aiff,.amr,.wma"
+                   class="hidden" />
+
+            <!-- Options -->
+            <div class="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <div class="flex items-center gap-2">
+                    <label for="language" class="text-sm text-zinc-400 font-medium">Language</label>
+                    <select id="language"
+                            class="text-sm border border-surface-500 rounded-lg px-3 py-1.5 bg-surface-800 text-zinc-300
+                                   focus:outline-none focus:ring-2 focus:ring-brand-400/50 focus:border-brand-400/50">
+                        <option value="en-IN">English (recommended)</option>
+                        <option value="auto">Auto-detect</option>
+                        <option value="hi-IN">Hindi</option>
+                        <option value="bn-IN">Bengali</option>
+                        <option value="ta-IN">Tamil</option>
+                        <option value="te-IN">Telugu</option>
+                        <option value="mr-IN">Marathi</option>
+                        <option value="gu-IN">Gujarati</option>
+                        <option value="kn-IN">Kannada</option>
+                        <option value="ml-IN">Malayalam</option>
+                        <option value="pa-IN">Punjabi</option>
+                        <option value="od-IN">Odia</option>
+                        <option value="as-IN">Assamese</option>
+                        <option value="ur-IN">Urdu</option>
+                        <option value="ne-IN">Nepali</option>
+                        <option value="mai-IN">Maithili</option>
+                        <option value="doi-IN">Dogri</option>
+                        <option value="kok-IN">Konkani</option>
+                        <option value="ks-IN">Kashmiri</option>
+                        <option value="sd-IN">Sindhi</option>
+                        <option value="sa-IN">Sanskrit</option>
+                        <option value="sat-IN">Santali</option>
+                        <option value="mni-IN">Manipuri</option>
+                        <option value="brx-IN">Bodo</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Inline validation error (shown for file type/size/count errors without navigating away) -->
+            <div id="uploadValidationMsg" class="hidden mt-3 flex items-start gap-2 p-3 rounded-xl bg-red-500/5 border border-red-500/20">
+                <svg class="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <p id="uploadValidationText" class="text-xs text-red-400/80"></p>
+                    <p id="uploadValidationHint" class="text-[11px] text-zinc-500 mt-1"></p>
+                </div>
+            </div>
+
+            <!-- Cost estimate (shown after file selection) -->
+            <div id="costEstimate" class="hidden mt-5 flex items-center justify-between text-xs px-4 py-2.5 rounded-xl bg-surface-800/80 border border-surface-600/50">
+                <div class="flex items-center gap-4 text-zinc-400">
+                    <span id="audioDuration" class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span id="audioDurationText">—</span>
+                    </span>
+                </div>
+                <span class="text-brand-400 font-semibold" id="costText">—</span>
+            </div>
+
+            <!-- Transcribe Button -->
+            <button id="transcribeBtn"
+                    onclick="startTranscription()"
+                    disabled
+                    class="btn-primary mt-4 w-full py-3 rounded-xl text-black text-sm font-bold tracking-wide">
+                Transcribe
+            </button>
+        </div>
+
+        <!-- Progress Card -->
+        <div id="progressCard" class="hidden card rounded-2xl p-6 card-enter">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-[11px] font-semibold text-zinc-500 uppercase tracking-[0.12em]">Progress</h2>
+                <div class="flex items-center gap-3">
+                    <span id="elapsedTime" class="text-xs text-zinc-600 tabular-nums"></span>
+                    <span id="statusBadge"
+                          class="text-[11px] font-semibold px-3 py-1 rounded-full bg-brand-400/10 text-brand-400 border border-brand-400/20 flex items-center">
+                        <span class="pulse-dot"></span>Running
+                    </span>
+                    <button id="cancelBtn"
+                            onclick="cancelJob()"
+                            class="hidden text-xs px-3 py-1.5 rounded-lg border border-red-500/20 text-red-400/70
+                                   hover:text-red-400 hover:border-red-500/40 transition-all">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step indicator (4 steps) -->
+            <div class="flex items-center gap-0 mb-5 px-1">
+                <div class="step-item">
+                    <div class="step-dot active" id="stepUpload">1</div>
+                    <span class="text-xs text-zinc-500 hidden sm:inline">Upload</span>
+                </div>
+                <div class="step-line" id="line1"></div>
+                <div class="step-item">
+                    <div class="step-dot" id="stepSubmit">2</div>
+                    <span class="text-xs text-zinc-500 hidden sm:inline">Submit</span>
+                </div>
+                <div class="step-line" id="line2"></div>
+                <div class="step-item">
+                    <div class="step-dot" id="stepTranscribe">3</div>
+                    <span class="text-xs text-zinc-500 hidden sm:inline">Transcribe</span>
+                </div>
+                <div class="step-line" id="line3"></div>
+                <div class="step-item">
+                    <div class="step-dot" id="stepDone">&#10003;</div>
+                    <span class="text-xs text-zinc-500 hidden sm:inline">Done</span>
+                </div>
+            </div>
+
+            <!-- Upload progress bar (shown only during upload phase) -->
+            <div id="uploadProgressBar" class="hidden mb-4">
+                <div class="flex justify-between text-xs text-zinc-500 mb-1.5">
+                    <span id="uploadProgressLabel">Uploading…</span>
+                    <span id="uploadProgressPct">0%</span>
+                </div>
+                <div class="w-full bg-surface-700 rounded-full h-1.5">
+                    <div id="uploadProgressFill"
+                         class="bg-brand-400 h-1.5 rounded-full transition-all duration-150"
+                         style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Witty loading message -->
+            <div id="wittyMessage" class="text-center mb-4">
+                <p class="text-sm text-zinc-400 italic transition-opacity duration-500" id="wittyText"></p>
+            </div>
+
+            <!-- Terminal-style log -->
+            <div id="logBox"
+                 class="log-box bg-surface-950 text-brand-300 rounded-xl p-4 h-48 overflow-y-auto border border-surface-600/50">
+            </div>
+        </div>
+
+        <!-- Result Card -->
+        <div id="resultCard" class="hidden card rounded-2xl p-6 card-enter">
+            <!-- Header row -->
+            <div class="flex items-center justify-between mb-5 gap-3 flex-wrap">
+                <h2 class="text-[11px] font-semibold text-zinc-500 uppercase tracking-[0.12em]">Results</h2>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Copy -->
+                    <button id="copyBtn"
+                            onclick="copyTranscript(event)"
+                            class="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-surface-500
+                                   text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 hover:bg-surface-700 active:bg-surface-600 transition-all">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        Copy
+                    </button>
+                    <!-- Download .txt -->
+                    <a id="downloadTxt" href="#"
+                       class="text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-400 text-black
+                              font-semibold hover:bg-brand-300 transition-all">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Download .txt
+                    </a>
+                </div>
+            </div>
+
+            <!-- Result metadata -->
+            <div id="resultMeta" class="flex items-center gap-4 text-xs text-zinc-500 mb-4 flex-wrap">
+                <span id="metaWords" class="hidden flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span id="wordCountText"></span>
+                </span>
+                <span id="metaRead" class="hidden flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span id="readTimeText"></span>
+                </span>
+                <span id="metaDuration" class="hidden flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <span id="durationText"></span>
+                </span>
+            </div>
+
+            <!-- File tabs (shown only for multi-file results) -->
+            <div id="fileTabs" class="hidden flex gap-1.5 mb-3 flex-wrap"></div>
+
+            <!-- Tab bar (Transcript always visible; AI tabs shown after analysis) -->
+            <div id="resultTabs" class="flex gap-1 mb-4 bg-surface-900 rounded-lg p-1 border border-surface-600/50">
+                <button onclick="switchTab('transcript')" id="tabTranscript"
+                        class="result-tab active flex-1 text-xs font-medium py-2 px-3 rounded-md transition-all">
+                    Transcript
+                </button>
+                <button onclick="switchTab('speakers')" id="tabSpeakers"
+                        class="result-tab hidden flex-1 text-xs font-medium py-2 px-3 rounded-md transition-all">
+                    Speaker View
+                </button>
+                <button onclick="switchTab('summary')" id="tabSummary"
+                        class="result-tab hidden flex-1 text-xs font-medium py-2 px-3 rounded-md transition-all">
+                    Summary
+                </button>
+                <button onclick="switchTab('keywords')" id="tabKeywords"
+                        class="result-tab hidden flex-1 text-xs font-medium py-2 px-3 rounded-md transition-all">
+                    Keywords
+                </button>
+            </div>
+
+            <!-- Tab panels -->
+            <!-- Transcript (always visible) -->
+            <div id="panelTranscript">
+                <div id="transcriptBox"
+                     class="transcript-box bg-surface-900 border border-surface-600/50 rounded-xl p-5
+                            max-h-[32rem] overflow-y-auto text-zinc-300">
+                </div>
+            </div>
+
+            <!-- Speaker View -->
+            <div id="panelSpeakers" class="hidden">
+                <div id="speakersContent"
+                     class="bg-surface-900 border border-surface-600/50 rounded-xl p-5
+                            max-h-[32rem] overflow-y-auto space-y-3">
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div id="panelSummary" class="hidden">
+                <div id="summaryContent"
+                     class="bg-surface-900 border border-surface-600/50 rounded-xl p-5
+                            max-h-[32rem] overflow-y-auto">
+                </div>
+            </div>
+
+            <!-- Keywords -->
+            <div id="panelKeywords" class="hidden">
+                <div id="keywordsContent"
+                     class="bg-surface-900 border border-surface-600/50 rounded-xl p-5
+                            max-h-[32rem] overflow-y-auto space-y-4">
+                </div>
+            </div>
+
+            <!-- AI Analysis loading overlay -->
+            <div id="analysisOverlay" class="hidden mt-4 flex items-center gap-3 p-4 rounded-xl bg-brand-400/5 border border-brand-400/20">
+                <span class="spinner" style="border-color: rgba(251,191,36,0.2); border-top-color: #FBBF24;"></span>
+                <span id="analysisOverlayText" class="text-sm text-brand-400 font-medium">Analyzing with AI...</span>
+            </div>
+
+            <!-- AI Analysis error (non-blocking) -->
+            <div id="analysisError" class="hidden mt-4 flex items-center gap-2 p-3 rounded-xl bg-red-500/5 border border-red-500/20">
+                <svg class="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span id="analysisErrorText" class="text-xs text-red-400/80 flex-1"></span>
+                <button id="analysisRetryBtn" onclick="retryAnalysis()"
+                        class="text-xs px-3 py-1.5 rounded-lg border border-red-500/20 text-red-400/70
+                               hover:text-red-400 hover:border-red-500/30 transition-all whitespace-nowrap flex-shrink-0">
+                    Retry Analysis
+                </button>
+            </div>
+
+            <!-- Start over -->
+            <button onclick="resetApp()"
+                    class="mt-5 text-xs px-4 py-2 rounded-lg border border-surface-500 text-zinc-400
+                           hover:text-zinc-200 hover:border-zinc-500 hover:bg-surface-700 transition-all flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                New Transcription
+            </button>
+        </div>
+
+        <!-- Error Card -->
+        <div id="errorCard" class="hidden rounded-2xl p-5 border border-red-500/20 card-enter" style="background: rgba(239, 68, 68, 0.06);">
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-red-400">Transcription failed</p>
+                    <p id="errorMsg" class="text-sm text-red-400/70 mt-1"></p>
+                    <button onclick="resetApp()"
+                            class="mt-3 text-sm text-red-400/60 hover:text-red-400 transition-colors duration-200">
+                        Try again &rarr;
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-2xl mx-auto px-5 pb-8 pt-2">
+        <div class="border-t border-surface-700/50 pt-5 text-center">
+            <p class="text-[11px] text-zinc-700 tracking-wide">Powered by Sarvam AI &mdash; built for Indian languages</p>
+        </div>
+    </footer>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <script>
+        // ── State ──────────────────────────────────────────────────────────────
+        const state = {
+            phase:          'idle',   // idle | uploading | running | analyzing | done | error
+            jobId:          null,
+            files:          [],       // FileList as array (multi-file)
+            xhr:            null,     // current upload XHR (for cancel)
+            eventSource:    null,
+            transcript:     null,     // currently displayed transcript
+            transcripts:    {},       // filename -> text (multi-file)
+            diarization:    {},       // filename -> diarization data
+            analysis:       null,
+            analyses:       {},       // (filename|'__global__') -> analysis result (per-file cache)
+            analysisErrors: {},       // (filename|'__global__') -> error message
+            speakerColorMap:{},       // speaker_id -> hex color (stable across re-renders)
+            timerStart:     null,
+            timerInterval:  null,
+            jobStartTime:   null,     // for SSE timeout
+            sseRetryCount:  0,        // SSE retry cap counter
+            currentStep:    0,        // 0=none, 1=upload, 2=submit, 3=transcribe, 4=done
+            elapsedStr:     '',
+            activeTab:      'transcript',
+            activeFile:     null,     // currently selected file tab
+            filenames:      [],       // returned by server
+        };
+
+        // SSE retry constants
+        const SSE_MAX_RETRIES = 5;
+        const JOB_TIMEOUT_MS  = 10 * 60 * 1000; // 10 minutes
+
+        // Per-provider model cache (provider -> [{id, name}])
+        const modelCache = {};
+
+        // Global color index for stable speaker colors
+        let globalColorIdx = 0;
+
+        // ── Transcription Settings (persisted in localStorage) ─────────────────
+        let transcriptionSettings = { sarvamApiKey: '', diarization: false, numSpeakers: 2 };
+
+        function loadTranscriptionSettings() {
+            try {
+                const raw = localStorage.getItem('transcription_settings');
+                if (raw) transcriptionSettings = { ...transcriptionSettings, ...JSON.parse(raw) };
+            } catch {}
+            if (transcriptionSettings.sarvamApiKey) {
+                document.getElementById('sarvamApiKey').value = transcriptionSettings.sarvamApiKey;
+            }
+            document.getElementById('diarizationToggle').checked = !!transcriptionSettings.diarization;
+            document.getElementById('numSpeakers').value = transcriptionSettings.numSpeakers || 2;
+            onDiarizationToggleChange();
+            updateHeaderSubtitle();
+        }
+
+        function saveTranscriptionSettings() {
+            transcriptionSettings.sarvamApiKey = document.getElementById('sarvamApiKey').value.trim();
+            transcriptionSettings.diarization  = document.getElementById('diarizationToggle').checked;
+            transcriptionSettings.numSpeakers  = parseInt(document.getElementById('numSpeakers').value) || 2;
+            localStorage.setItem('transcription_settings', JSON.stringify(transcriptionSettings));
+            updateHeaderSubtitle();
+            const st = document.getElementById('transcriptionSettingsStatus');
+            st.textContent = '\u2713 Saved';
+            st.classList.remove('hidden');
+            st.classList.add('text-emerald-400');
+            setTimeout(() => { st.classList.add('hidden'); st.classList.remove('text-emerald-400'); }, 2000);
+        }
+
+        function onDiarizationToggleChange() {
+            const on = document.getElementById('diarizationToggle').checked;
+            document.getElementById('numSpeakersGroup').classList.toggle('hidden', !on);
+        }
+
+        // ── AI Settings (persisted in localStorage) ────────────────────────────
+        let aiSettings = { enabled: false, provider: '', apiKey: '', model: '' };
+
+        function loadAiSettings() {
+            try {
+                const raw = localStorage.getItem('ai_settings');
+                if (raw) aiSettings = { ...aiSettings, ...JSON.parse(raw) };
+            } catch {}
+            // Reflect in UI
+            document.getElementById('aiToggle').checked = aiSettings.enabled;
+            document.getElementById('aiProvider').value = aiSettings.provider || '';
+            document.getElementById('aiApiKey').value = aiSettings.apiKey || '';
+            onAiToggleChange(true);   // sync visibility
+            onProviderChange(true);   // sync key/model visibility
+            if (aiSettings.model) {
+                // Set model after a tick so the select has time to be visible
+                setTimeout(() => {
+                    const sel = document.getElementById('aiModel');
+                    if (aiSettings.model && sel.querySelector(`option[value="${CSS.escape(aiSettings.model)}"]`) === null) {
+                        const opt = document.createElement('option');
+                        opt.value = aiSettings.model;
+                        opt.textContent = aiSettings.model;
+                        sel.appendChild(opt);
+                    }
+                    sel.value = aiSettings.model;
+                }, 50);
+            }
+            updateHeaderSubtitle();
+        }
+
+        function saveAiSettings() {
+            aiSettings.enabled  = document.getElementById('aiToggle').checked;
+            aiSettings.provider = document.getElementById('aiProvider').value;
+            aiSettings.apiKey   = document.getElementById('aiApiKey').value.trim();
+            aiSettings.model    = document.getElementById('aiModel').value;
+            localStorage.setItem('ai_settings', JSON.stringify(aiSettings));
+            updateHeaderSubtitle();
+            // Show confirmation
+            const st = document.getElementById('settingsStatus');
+            st.textContent = '\u2713 Settings saved';
+            st.classList.remove('hidden');
+            st.classList.add('text-emerald-400');
+            setTimeout(() => { st.classList.add('hidden'); st.classList.remove('text-emerald-400'); }, 2000);
+        }
+
+        function clearTranscriptionCredentials() {
+            localStorage.removeItem('transcription_settings');
+            transcriptionSettings = { sarvamApiKey: '', diarization: false, numSpeakers: 2 };
+            document.getElementById('sarvamApiKey').value = '';
+            document.getElementById('diarizationToggle').checked = false;
+            document.getElementById('numSpeakers').value = 2;
+            onDiarizationToggleChange();
+            updateHeaderSubtitle();
+            const st = document.getElementById('transcriptionSettingsStatus');
+            st.textContent = 'Cleared';
+            st.classList.remove('hidden', 'text-emerald-400');
+            st.classList.add('text-zinc-500');
+            setTimeout(() => { st.classList.add('hidden'); st.classList.remove('text-zinc-500'); }, 2000);
+        }
+
+        function clearAiCredentials() {
+            localStorage.removeItem('ai_settings');
+            aiSettings = { enabled: false, provider: '', apiKey: '', model: '' };
+            document.getElementById('aiToggle').checked = false;
+            document.getElementById('aiProvider').value = '';
+            document.getElementById('aiApiKey').value = '';
+            document.getElementById('aiModel').innerHTML = '<option value="">Enter API key first...</option>';
+            onAiToggleChange(true);
+            onProviderChange(true);
+            updateHeaderSubtitle();
+            const st = document.getElementById('settingsStatus');
+            st.textContent = 'Cleared';
+            st.classList.remove('hidden', 'text-emerald-400');
+            st.classList.add('text-zinc-500');
+            setTimeout(() => { st.classList.add('hidden'); st.classList.remove('text-zinc-500'); }, 2000);
+        }
+
+        function updateHeaderSubtitle() {
+            const sub = document.getElementById('headerSubtitle');
+            const hasSarvam = !!transcriptionSettings.sarvamApiKey;
+            const hasAi = aiSettings.enabled && aiSettings.provider && aiSettings.apiKey;
+
+            if (hasSarvam && hasAi) {
+                const names = { claude: 'Claude', openai: 'OpenAI', gemini: 'Gemini' };
+                const name = names[aiSettings.provider] || aiSettings.provider;
+                sub.innerHTML = `Sarvam AI connected &middot; Analysis via <span class="text-brand-400 font-medium">${escHtml(name)}</span>`;
+            } else if (hasSarvam) {
+                sub.innerHTML = 'Sarvam AI connected';
+            } else {
+                sub.innerHTML = 'Powered by Sarvam AI';
+            }
+        }
+
+        // ── Settings UI handlers ───────────────────────────────────────────────
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            const btn = document.getElementById('settingsToggle');
+            const isHidden = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden');
+            btn.classList.toggle('settings-gear-active', isHidden);
+        }
+
+        function onAiToggleChange(init) {
+            const on = document.getElementById('aiToggle').checked;
+            document.getElementById('aiSettings').classList.toggle('hidden', !on);
+            if (!init) { aiSettings.enabled = on; updateHeaderSubtitle(); }
+        }
+
+        function onProviderChange(init) {
+            const provider = document.getElementById('aiProvider').value;
+            const hasProvider = !!provider;
+            document.getElementById('apiKeyGroup').classList.toggle('hidden', !hasProvider);
+            document.getElementById('modelGroup').classList.toggle('hidden', !hasProvider);
+            if (!init && provider !== aiSettings.provider) {
+                aiSettings.model = '';
+                // Restore from cache if available, otherwise show placeholder
+                if (modelCache[provider] && modelCache[provider].length > 0) {
+                    const select = document.getElementById('aiModel');
+                    select.innerHTML = '<option value="">Select a model...</option>';
+                    modelCache[provider].forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.textContent = m.name || m.id;
+                        select.appendChild(opt);
+                    });
+                    showModelStatus(`${modelCache[provider].length} models restored from cache`, false);
+                } else {
+                    document.getElementById('aiModel').innerHTML = '<option value="">Enter API key first...</option>';
+                }
+            }
+        }
+
+        function toggleSarvamKeyVisibility() {
+            const input = document.getElementById('sarvamApiKey');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function toggleKeyVisibility() {
+            const input = document.getElementById('aiApiKey');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        async function fetchModels() {
+            const provider = document.getElementById('aiProvider').value;
+            const apiKey = document.getElementById('aiApiKey').value.trim();
+            if (!provider || !apiKey) {
+                showModelStatus('Please select a provider and enter an API key first.', true);
+                return;
+            }
+
+            const btn = document.getElementById('fetchModelsBtn');
+            const origText = btn.textContent;
+            btn.textContent = 'Loading...';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/models', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider, api_key: apiKey }),
+                });
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    showModelStatus(data.error || 'Failed to fetch models', true);
+                    return;
+                }
+
+                const select = document.getElementById('aiModel');
+                select.innerHTML = '<option value="">Select a model...</option>';
+                (data.models || []).forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.name || m.id;
+                    select.appendChild(opt);
+                });
+
+                // Cache models for this provider
+                modelCache[provider] = data.models || [];
+
+                // Restore saved model if it exists in the list
+                if (aiSettings.model) {
+                    select.value = aiSettings.model;
+                }
+
+                showModelStatus(`${data.models.length} models loaded`, false);
+            } catch (err) {
+                showModelStatus('Error: ' + err.message, true);
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        }
+
+        function showModelStatus(msg, isError) {
+            const el = document.getElementById('modelStatus');
+            el.textContent = msg;
+            el.classList.remove('hidden', 'text-red-400', 'text-zinc-600');
+            el.classList.add(isError ? 'text-red-400' : 'text-zinc-600');
+            if (!isError) setTimeout(() => el.classList.add('hidden'), 3000);
+        }
+
+        // ── DOM refs ───────────────────────────────────────────────────────────
+        const dropZone      = document.getElementById('dropZone');
+        const dropLabel     = document.getElementById('dropLabel');
+        const fileInput     = document.getElementById('fileInput');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const progressCard  = document.getElementById('progressCard');
+        const logBox        = document.getElementById('logBox');
+        const statusBadge   = document.getElementById('statusBadge');
+        const resultCard    = document.getElementById('resultCard');
+        const transcriptBox = document.getElementById('transcriptBox');
+        const downloadTxt   = document.getElementById('downloadTxt');
+        const errorCard     = document.getElementById('errorCard');
+        const errorMsg      = document.getElementById('errorMsg');
+        const copyBtn       = document.getElementById('copyBtn');
+
+        // ── Drag & Drop ────────────────────────────────────────────────────────
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drop-active');
+        });
+        dropZone.addEventListener('dragleave', (e) => {
+            if (!dropZone.contains(e.relatedTarget)) {
+                dropZone.classList.remove('drop-active');
+            }
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drop-active');
+            if (e.dataTransfer.files.length > 0) handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) handleFiles(fileInput.files);
+        });
+
+        const MAX_FILE_SIZE  = 200 * 1024 * 1024; // 200 MB — batch API practical limit
+        const MAX_FILE_COUNT = 20;
+
+        function handleFiles(fileList) {
+            const supported = ['.mp3','.wav','.m4a','.mp4','.webm','.ogg','.opus','.flac','.aac','.aiff','.amr','.wma'];
+            const files = Array.from(fileList);
+
+            hideValidationError();
+
+            if (files.length > MAX_FILE_COUNT) {
+                showValidationError(
+                    `Too many files selected (${files.length}).`,
+                    `Maximum is ${MAX_FILE_COUNT} files per batch. Please remove some files and try again.`
+                );
+                return;
+            }
+
+            for (const file of files) {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (!supported.includes(ext)) {
+                    showValidationError(
+                        `Unsupported file type: ${ext}`,
+                        `"${file.name}" cannot be transcribed. Supported formats: mp3, wav, m4a, mp4, webm, ogg, opus, flac, aac, aiff, amr, wma`
+                    );
+                    return;
+                }
+                if (file.size > MAX_FILE_SIZE) {
+                    const fileMB = (file.size / (1024 * 1024)).toFixed(1);
+                    showValidationError(
+                        `File too large: ${file.name} (${fileMB} MB)`,
+                        `Each file must be under 200 MB. Please compress or trim the recording and try again.`
+                    );
+                    return;
+                }
+            }
+
+            state.files = files;
+            const totalMB = (files.reduce((s, f) => s + f.size, 0) / (1024 * 1024)).toFixed(1);
+
+            if (files.length === 1) {
+                dropLabel.innerHTML = `
+                    <span class="font-semibold text-brand-400 text-sm">${escHtml(files[0].name)}</span>
+                    <span class="text-zinc-500 text-xs ml-2">${totalMB} MB</span>`;
+            } else {
+                dropLabel.innerHTML = `
+                    <span class="font-semibold text-brand-400 text-sm">${files.length} files selected</span>
+                    <span class="text-zinc-500 text-xs ml-2">${totalMB} MB total</span>`;
+            }
+            estimateCumulativeCost(files);
+
+            dropZone.classList.add('border-brand-400/50', 'bg-brand-400/[0.03]');
+            transcribeBtn.disabled = false;
+            errorCard.classList.add('hidden');
+        }
+
+        // ── Transcription flow ─────────────────────────────────────────────────
+        async function startTranscription() {
+            if (!state.files || state.files.length === 0) return;
+
+            if (!transcriptionSettings.sarvamApiKey) {
+                showError('Sarvam API key is required. Add it in Settings → Transcription API.');
+                document.getElementById('settingsPanel').classList.remove('hidden');
+                document.getElementById('settingsToggle').classList.add('settings-gear-active');
+                errorCard.classList.remove('hidden');
+                return;
+            }
+
+            setPhase('uploading');
+
+            const n = state.files.length;
+            document.getElementById('uploadProgressLabel').textContent =
+                n === 1 ? `Uploading ${state.files[0].name}…` : `Uploading ${n} files…`;
+
+            const formData = new FormData();
+            state.files.forEach(f => formData.append('files', f));
+            formData.append('language',         document.getElementById('language').value);
+            formData.append('sarvam_api_key',   transcriptionSettings.sarvamApiKey);
+            formData.append('with_diarization', transcriptionSettings.diarization ? 'true' : 'false');
+            formData.append('num_speakers',     String(transcriptionSettings.numSpeakers || 2));
+
+            let uploadData;
+            try {
+                uploadData = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    state.xhr = xhr;  // expose for cancel
+                    xhr.open('POST', '/api/upload');
+                    xhr.timeout = 120000; // 2 min — generous for multi-file local upload
+                    xhr.ontimeout = () => { state.xhr = null; reject(new Error('Upload timed out. Please check your connection and try again.')); };
+                    xhr.upload.onprogress = (e) => {
+                        if (e.lengthComputable) {
+                            updateUploadProgress(Math.round((e.loaded / e.total) * 100));
+                        }
+                    };
+                    xhr.onload = () => {
+                        state.xhr = null;
+                        if (xhr.status === 413) {
+                            reject(new Error('Files too large. Maximum 200 MB per file.'));
+                        } else if (xhr.status !== 202) {
+                            let msg;
+                            try { msg = JSON.parse(xhr.responseText).error; } catch (_) { msg = xhr.statusText; }
+                            reject(new Error(msg || 'Upload failed'));
+                        } else {
+                            resolve(JSON.parse(xhr.responseText));
+                        }
+                    };
+                    xhr.onerror = () => { state.xhr = null; reject(new Error('Upload failed — is the server running?')); };
+                    xhr.onabort = () => { state.xhr = null; reject(new Error('Upload cancelled.')); };
+                    xhr.send(formData);
+                });
+            } catch (err) {
+                if (state.phase === 'idle') return; // cancelled — already reset
+                showError(err.message);
+                setPhase('error');
+                return;
+            }
+
+            state.jobId     = uploadData.job_id;
+            state.filenames = uploadData.filenames || [uploadData.filename];
+            state.jobStartTime = Date.now();
+            state.sseRetryCount = 0;
+            setPhase('running');
+            openSSE(uploadData.job_id);
+        }
+
+        function openSSE(jobId) {
+            if (state.eventSource) state.eventSource.close();
+
+            const es = new EventSource(`/api/jobs/${jobId}/stream`);
+            state.eventSource = es;
+            let sseErrors = 0;
+
+            es.onmessage = (e) => {
+                sseErrors = 0;
+                appendLog(e.data);
+            };
+
+            es.addEventListener('status', (e) => {
+                es.close();
+                state.eventSource = null;
+                state.sseRetryCount = 0;
+                const payload = JSON.parse(e.data);
+                if (payload.status === 'done') {
+                    if (payload.filenames && payload.filenames.length > 0) {
+                        state.filenames = payload.filenames;
+                    }
+                    loadTranscript(jobId, payload.has_diarization);
+                } else {
+                    showError(payload.error || 'Transcription failed — check the progress log for details.');
+                    setPhase('error');
+                }
+            });
+
+            es.onerror = () => {
+                if (state.phase === 'done' || state.phase === 'error' || state.phase === 'analyzing') {
+                    es.close();
+                    state.eventSource = null;
+                    return;
+                }
+                sseErrors++;
+                if (sseErrors >= 3) {
+                    es.close();
+                    state.eventSource = null;
+                    pollJobStatus(jobId);
+                }
+            };
+        }
+
+        async function pollJobStatus(jobId) {
+            // Check retry cap and job timeout before re-opening SSE
+            state.sseRetryCount++;
+            if (state.sseRetryCount > SSE_MAX_RETRIES) {
+                showError('Connection lost after multiple retries. The job may still be running — refresh to check.');
+                setPhase('error');
+                return;
+            }
+            if (state.jobStartTime && (Date.now() - state.jobStartTime) > JOB_TIMEOUT_MS) {
+                showError('Job timed out after 10 minutes. Please try again.');
+                setPhase('error');
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/api/jobs/${jobId}/status`);
+                if (!resp.ok) {
+                    showError('Lost connection to the server. Please refresh and try again.');
+                    setPhase('error');
+                    return;
+                }
+                const data = await resp.json();
+                if (data.status === 'done') {
+                    if (data.filenames && data.filenames.length > 0) state.filenames = data.filenames;
+                    loadTranscript(jobId, data.has_diarization);
+                } else if (data.status === 'error') {
+                    showError(data.error || 'Transcription failed.');
+                    setPhase('error');
+                } else {
+                    openSSE(jobId);
+                }
+            } catch {
+                showError('Lost connection to the server. Please refresh and try again.');
+                setPhase('error');
+            }
+        }
+
+        function cancelJob() {
+            if (state.xhr) { state.xhr.abort(); state.xhr = null; }
+            if (state.eventSource) { state.eventSource.close(); state.eventSource = null; }
+            stopTimer();
+            stopWittyMessages();
+            state.sseRetryCount = 0;
+            state.jobId = null;
+            state.jobStartTime = null;
+            // Reset to idle — preserve file selection so user can retry
+            setPhase('idle');
+        }
+
+        async function loadTranscript(jobId, hasDiarization) {
+            // Load per-file transcripts if multi-file
+            const filenames = state.filenames || [];
+            if (filenames.length > 1) {
+                for (const fname of filenames) {
+                    try {
+                        const r = await fetch(`/api/jobs/${jobId}/transcript?file=${encodeURIComponent(fname)}`);
+                        if (r.ok) state.transcripts[fname] = await r.text();
+                    } catch (_) {}
+                }
+                // Show file tabs
+                renderFileTabs(filenames, jobId);
+                // Display first file's transcript
+                const first = filenames[0];
+                state.activeFile = first;
+                state.transcript = state.transcripts[first] || '';
+            } else {
+                // Single file
+                let resp;
+                try {
+                    resp = await fetch(`/api/jobs/${jobId}/transcript`);
+                } catch (err) {
+                    showError('Could not load transcript: ' + err.message);
+                    setPhase('error');
+                    return;
+                }
+                if (!resp.ok) {
+                    showError('Transcript unavailable.');
+                    setPhase('error');
+                    return;
+                }
+                state.transcript = await resp.text();
+            }
+
+            transcriptBox.textContent = state.transcript;
+            showResultMeta(state.transcript);
+            downloadTxt.href = `/api/jobs/${jobId}/transcript?download=1`;
+
+            // Load native diarization if available
+            if (hasDiarization) {
+                try {
+                    const dr = await fetch(`/api/jobs/${jobId}/diarization`);
+                    if (dr.ok) {
+                        const diaData = await dr.json();
+                        state.diarization = diaData.diarization || {};
+                        // Show Speaker View tab with native diarization
+                        const firstDia = state.activeFile
+                            ? state.diarization[state.activeFile]
+                            : Object.values(state.diarization)[0];
+                        if (firstDia && firstDia.length > 0) {
+                            renderNativeDiarization(firstDia);
+                            document.getElementById('tabSpeakers').classList.remove('hidden');
+                        }
+                    }
+                } catch (_) {}
+            }
+
+            // Run AI analysis if configured (for summary + keywords)
+            if (aiSettings.enabled && aiSettings.apiKey && aiSettings.provider && aiSettings.model) {
+                setPhase('analyzing');
+                // For multi-file, analyze the first file; for single-file, omit filename (global)
+                const analysisFilename = filenames.length > 1 ? filenames[0] : undefined;
+                startAiAnalysis(jobId, analysisFilename);
+            } else {
+                setPhase('done');
+            }
+        }
+
+        function renderFileTabs(filenames, jobId) {
+            const container = document.getElementById('fileTabs');
+            container.innerHTML = '';
+            filenames.forEach((fname, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'file-tab' + (i === 0 ? ' active' : '');
+                btn.title = fname;
+                btn.textContent = fname.length > 20 ? fname.slice(0, 17) + '…' : fname;
+                btn.onclick = () => switchFileTab(fname, filenames, jobId);
+                container.appendChild(btn);
+            });
+            container.classList.remove('hidden');
+        }
+
+        function switchFileTab(fname, filenames, jobId) {
+            state.activeFile = fname;
+            state.transcript = state.transcripts[fname] || '';
+            transcriptBox.textContent = state.transcript;
+            showResultMeta(state.transcript);
+            // Update tab active state
+            const btns = document.getElementById('fileTabs').querySelectorAll('.file-tab');
+            btns.forEach((btn, i) => {
+                btn.classList.toggle('active', filenames[i] === fname);
+            });
+            // Update diarization view if Speaker View is active
+            if (state.activeTab === 'speakers' && state.diarization[fname]) {
+                renderNativeDiarization(state.diarization[fname]);
+            }
+            // Update download link for this file
+            downloadTxt.href = `/api/jobs/${jobId}/transcript?file=${encodeURIComponent(fname)}&download=1`;
+            // Trigger per-file AI analysis if enabled
+            if (aiSettings.enabled && aiSettings.apiKey && aiSettings.provider && aiSettings.model) {
+                document.getElementById('analysisError').classList.add('hidden');
+                startAiAnalysis(jobId, fname);
+            }
+        }
+
+        function renderNativeDiarization(entries) {
+            const speakersEl = document.getElementById('speakersContent');
+            if (!entries || entries.length === 0) {
+                speakersEl.innerHTML = '<p class="text-sm text-zinc-500">No diarization data.</p>';
+                return;
+            }
+            // Assign consistent colors per speaker_id (stable across re-renders via state.speakerColorMap)
+            const speakerColors = ['#FBBF24','#22C55E','#60A5FA','#C084FC','#F87171','#34D399','#FB923C','#A78BFA'];
+            speakersEl.innerHTML = entries.map(e => {
+                const sid = e.speaker_id || 'speaker_0';
+                if (!(sid in state.speakerColorMap)) {
+                    state.speakerColorMap[sid] = speakerColors[globalColorIdx++ % speakerColors.length];
+                }
+                const color = state.speakerColorMap[sid];
+                const start = formatTime(e.start || 0);
+                const end   = formatTime(e.end   || 0);
+                return `<div class="dia-turn" style="border-color:${color}; background:${color}18">
+                    <div class="dia-speaker" style="color:${color}">
+                        ${escHtml(sid.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()))}
+                        <span class="dia-time">${start} – ${end}</span>
+                    </div>
+                    <div class="dia-text">${escHtml(e.transcript || '')}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function formatTime(secs) {
+            const m = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return m > 0 ? `${m}:${s.toString().padStart(2,'0')}` : `0:${s.toString().padStart(2,'0')}`;
+        }
+
+        // ── AI Analysis flow ───────────────────────────────────────────────────
+        function showSkeletons() {
+            const skeleton = `<div class="space-y-3">
+                <div class="h-3 bg-surface-700 rounded-full w-3/4 animate-pulse"></div>
+                <div class="h-3 bg-surface-700 rounded-full w-full animate-pulse"></div>
+                <div class="h-3 bg-surface-700 rounded-full w-5/6 animate-pulse"></div>
+                <div class="h-3 bg-surface-700 rounded-full w-2/3 animate-pulse"></div>
+            </div>`;
+            document.getElementById('summaryContent').innerHTML  = skeleton;
+            document.getElementById('speakersContent').innerHTML = skeleton;
+            document.getElementById('keywordsContent').innerHTML = skeleton;
+        }
+
+        async function startAiAnalysis(jobId, filename) {
+            const cacheKey = filename || '__global__';
+
+            // Serve from cache if available
+            if (state.analyses[cacheKey]) {
+                renderAnalysisResults(state.analyses[cacheKey]);
+                showAiTabs();
+                document.getElementById('analysisOverlay').classList.add('hidden');
+                document.getElementById('analysisError').classList.add('hidden');
+                if (state.phase === 'analyzing') setPhase('done');
+                return;
+            }
+
+            const names = { claude: 'Claude', openai: 'OpenAI', gemini: 'Gemini' };
+            const providerName = names[aiSettings.provider] || aiSettings.provider;
+            const fileLabel = filename ? ` (${filename})` : '';
+            document.getElementById('analysisOverlayText').textContent = `Analyzing with ${providerName} (${aiSettings.model})${fileLabel}...`;
+            document.getElementById('analysisOverlay').classList.remove('hidden');
+            document.getElementById('analysisError').classList.add('hidden');
+
+            // Show skeletons and tabs immediately so user sees loading state
+            showSkeletons();
+            showAiTabs();
+
+            try {
+                const body = {
+                    job_id:   jobId,
+                    provider: aiSettings.provider,
+                    api_key:  aiSettings.apiKey,
+                    model:    aiSettings.model,
+                };
+                if (filename) body.filename = filename;
+
+                const resp = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                const data = await resp.json();
+
+                document.getElementById('analysisOverlay').classList.add('hidden');
+
+                if (!resp.ok || data.error) {
+                    state.analysisErrors[cacheKey] = data.error || 'Analysis failed';
+                    showAnalysisError(state.analysisErrors[cacheKey]);
+                    if (state.phase === 'analyzing') setPhase('done');
+                    return;
+                }
+
+                state.analysis = data.analysis;
+                state.analyses[cacheKey] = data.analysis;
+                renderAnalysisResults(data.analysis);
+                showAiTabs();
+                if (state.phase === 'analyzing') setPhase('done');
+
+            } catch (err) {
+                document.getElementById('analysisOverlay').classList.add('hidden');
+                const msg = 'Analysis request failed: ' + err.message;
+                state.analysisErrors[cacheKey] = msg;
+                showAnalysisError(msg);
+                if (state.phase === 'analyzing') setPhase('done');
+            }
+        }
+
+        function retryAnalysis() {
+            if (!state.jobId) return;
+            if (!aiSettings.enabled || !aiSettings.apiKey || !aiSettings.provider || !aiSettings.model) {
+                showAnalysisError('AI settings not configured. Open Settings to add your API key.');
+                return;
+            }
+            const filename = state.activeFile || undefined;
+            const cacheKey = filename || '__global__';
+            // Clear cached error so a fresh attempt is made
+            delete state.analysisErrors[cacheKey];
+            delete state.analyses[cacheKey]; // force re-fetch
+            document.getElementById('analysisError').classList.add('hidden');
+            startAiAnalysis(state.jobId, filename);
+        }
+
+        function showAnalysisError(msg) {
+            const el = document.getElementById('analysisError');
+            document.getElementById('analysisErrorText').textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function showAiTabs() {
+            // Only show Speaker View from AI if Sarvam native diarization didn't already populate it
+            const hasNativeDia = Object.keys(state.diarization).length > 0;
+            if (!hasNativeDia) {
+                document.getElementById('tabSpeakers').classList.remove('hidden');
+            }
+            document.getElementById('tabSummary').classList.remove('hidden');
+            document.getElementById('tabKeywords').classList.remove('hidden');
+        }
+
+        function renderAnalysisResults(analysis) {
+            // Summary
+            const summaryEl = document.getElementById('summaryContent');
+            if (analysis.summary && Array.isArray(analysis.summary)) {
+                summaryEl.innerHTML = `
+                    <h3 class="text-[11px] font-semibold text-zinc-500 uppercase tracking-[0.12em] mb-3">Call Summary</h3>
+                    <ul class="space-y-2">
+                        ${analysis.summary.map(s => `
+                            <li class="flex items-start gap-2 text-sm text-zinc-300 leading-relaxed">
+                                <span class="text-brand-400 mt-1 flex-shrink-0">&bull;</span>
+                                <span>${escHtml(s)}</span>
+                            </li>
+                        `).join('')}
+                    </ul>`;
+            } else {
+                summaryEl.innerHTML = '<p class="text-sm text-zinc-500">No summary available.</p>';
+            }
+
+            // Speakers
+            const speakersEl = document.getElementById('speakersContent');
+            if (analysis.speakers && Array.isArray(analysis.speakers)) {
+                speakersEl.innerHTML = analysis.speakers.map(turn => {
+                    const isSales = /sales|rep|agent|seller/i.test(turn.speaker);
+                    const cls = isSales ? 'sales-rep' : 'prospect';
+                    return `
+                        <div class="speaker-turn ${cls}">
+                            <div class="speaker-label">${escHtml(turn.speaker)}</div>
+                            <div class="speaker-text">${escHtml(turn.text)}</div>
+                        </div>`;
+                }).join('');
+            } else {
+                speakersEl.innerHTML = '<p class="text-sm text-zinc-500">No speaker data available.</p>';
+            }
+
+            // Keywords
+            const keywordsEl = document.getElementById('keywordsContent');
+            const kw = analysis.keywords || {};
+            const categories = [
+                { key: 'competitors', label: 'Competitors', cls: 'competitors' },
+                { key: 'pricing',     label: 'Pricing',     cls: 'pricing' },
+                { key: 'pain_points', label: 'Pain Points', cls: 'pain_points' },
+                { key: 'products',    label: 'Products',    cls: 'products' },
+                { key: 'topics',      label: 'Topics',      cls: 'topics' },
+            ];
+            let kwHtml = '';
+            categories.forEach(cat => {
+                const items = kw[cat.key];
+                if (items && items.length > 0) {
+                    kwHtml += `
+                        <div>
+                            <h4 class="text-[11px] font-semibold text-zinc-500 uppercase tracking-[0.12em] mb-2">${cat.label}</h4>
+                            <div class="flex flex-wrap">
+                                ${items.map(k => `<span class="kw-badge ${cat.cls}">${escHtml(k)}</span>`).join('')}
+                            </div>
+                        </div>`;
+                }
+            });
+            keywordsEl.innerHTML = kwHtml || '<p class="text-sm text-zinc-500">No keywords detected.</p>';
+        }
+
+        // ── Tab switching ──────────────────────────────────────────────────────
+        function switchTab(tab) {
+            state.activeTab = tab;
+            const tabs = ['transcript', 'speakers', 'summary', 'keywords'];
+            tabs.forEach(t => {
+                const tabBtn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+                const panel = document.getElementById('panel' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (t === tab) {
+                    tabBtn.classList.add('active');
+                    panel.classList.remove('hidden');
+                } else {
+                    tabBtn.classList.remove('active');
+                    panel.classList.add('hidden');
+                }
+            });
+        }
+
+        // ── UI state machine ───────────────────────────────────────────────────
+        function setPhase(phase) {
+            state.phase = phase;
+
+            const cancelBtn = document.getElementById('cancelBtn');
+
+            // Show/hide cards
+            progressCard.classList.toggle('hidden', phase === 'idle');
+            resultCard.classList.toggle('hidden',   phase !== 'done' && phase !== 'analyzing');
+            errorCard.classList.toggle('hidden',    phase !== 'error');
+
+            // Upload progress bar visibility
+            const uploadBar = document.getElementById('uploadProgressBar');
+            const wittyMsg  = document.getElementById('wittyMessage');
+            uploadBar.classList.toggle('hidden', phase !== 'uploading');
+            wittyMsg.classList.toggle('hidden',  phase === 'uploading');
+
+            // Button state + timer
+            if (phase === 'idle') {
+                transcribeBtn.innerHTML = 'Transcribe';
+                transcribeBtn.disabled  = (state.files.length === 0);
+                stopTimer();
+                stopWittyMessages();
+                document.getElementById('elapsedTime').textContent = '';
+                progressCard.classList.add('hidden');
+                resultCard.classList.add('hidden');
+                errorCard.classList.add('hidden');
+                cancelBtn.classList.add('hidden');
+            } else if (phase === 'uploading') {
+                transcribeBtn.innerHTML = '<span class="spinner"></span>Uploading\u2026';
+                transcribeBtn.disabled = true;
+                statusBadge.innerHTML  = '<span class="pulse-dot"></span>Uploading';
+                statusBadge.className  = 'text-[11px] font-semibold px-3 py-1 rounded-full bg-brand-400/10 text-brand-400 border border-brand-400/20 flex items-center';
+                state.currentStep = 0;   // allow setStep(1) to fire
+                setStep(1);              // highlight Upload dot immediately
+                cancelBtn.classList.remove('hidden');
+            } else if (phase === 'running') {
+                transcribeBtn.innerHTML = '<span class="spinner"></span>Transcribing\u2026';
+                transcribeBtn.disabled = true;
+                statusBadge.innerHTML  = '<span class="pulse-dot"></span>Running';
+                statusBadge.className  = 'text-[11px] font-semibold px-3 py-1 rounded-full bg-brand-400/10 text-brand-400 border border-brand-400/20 flex items-center';
+                setStep(2);   // Upload done → Submit step active
+                startTimer();
+                startWittyMessages();
+                cancelBtn.classList.remove('hidden');
+            } else if (phase === 'analyzing') {
+                transcribeBtn.innerHTML = '<span class="spinner"></span>Analyzing\u2026';
+                transcribeBtn.disabled = true;
+                stopTimer();
+                stopWittyMessages();
+                statusBadge.innerHTML  = '<span class="pulse-dot"></span>Analyzing';
+                statusBadge.className  = 'text-[11px] font-semibold px-3 py-1 rounded-full bg-brand-400/10 text-brand-400 border border-brand-400/20 flex items-center';
+                cancelBtn.classList.add('hidden');
+            } else if (phase === 'done') {
+                transcribeBtn.innerHTML = 'Transcribe';
+                transcribeBtn.disabled = true;
+                stopTimer();
+                stopWittyMessages();
+                statusBadge.innerHTML  = '\u2705 Complete';
+                statusBadge.className  = 'text-[11px] font-semibold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+                cancelBtn.classList.add('hidden');
+            } else if (phase === 'error') {
+                transcribeBtn.innerHTML = 'Transcribe';
+                transcribeBtn.disabled = true;
+                stopTimer();
+                stopWittyMessages();
+                statusBadge.innerHTML  = '\u274C Failed';
+                statusBadge.className  = 'text-[11px] font-semibold px-3 py-1 rounded-full bg-red-500/10 text-red-400 border border-red-500/20';
+                cancelBtn.classList.add('hidden');
+                downloadTxt.href = '#';
+            }
+        }
+
+        // ── Progress tracking (4-step) ─────────────────────────────────────────
+        function setStep(n) {
+            if (n <= state.currentStep) return;
+            state.currentStep = n;
+            // steps: 1=Upload, 2=Submit, 3=Transcribe, 4=Done
+            const steps = [
+                { dot: 'stepUpload',    line: null    },
+                { dot: 'stepSubmit',    line: 'line1' },
+                { dot: 'stepTranscribe',line: 'line2' },
+                { dot: 'stepDone',      line: 'line3' },
+            ];
+            steps.forEach((s, i) => {
+                const dot  = document.getElementById(s.dot);
+                const line = s.line ? document.getElementById(s.line) : null;
+                if (i + 1 < n) {
+                    dot.className = 'step-dot done';
+                    if (line) line.className = 'step-line done';
+                } else if (i + 1 === n) {
+                    dot.className = 'step-dot active';
+                } else {
+                    dot.className = 'step-dot';
+                    if (line) line.className = 'step-line';
+                }
+            });
+        }
+
+        function parseLogSignals(line) {
+            // Queue awareness — show "Queued" badge while waiting for a worker slot
+            if (line.includes('in the queue')) {
+                statusBadge.innerHTML  = '⏳ Queued';
+                statusBadge.className  = 'text-[11px] font-semibold px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20';
+            }
+            if (line.includes('Your turn!')) {
+                statusBadge.innerHTML  = '<span class="pulse-dot"></span>Running';
+                statusBadge.className  = 'text-[11px] font-semibold px-3 py-1 rounded-full bg-brand-400/10 text-brand-400 border border-brand-400/20 flex items-center';
+            }
+
+            if (line.includes('Starting batch'))          setStep(1);
+            if (line.includes('Batch job created'))       setStep(2);
+            if (line.includes('Processing:') ||
+                line.includes('Sarvam batch job started')) setStep(3);
+            if (line.includes('Batch complete') ||
+                line.includes('Transcription complete'))   setStep(4);
+
+            const timeMatch = line.match(/in (\d+) min (\d+) sec/);
+            if (timeMatch) {
+                state.elapsedStr = `${timeMatch[1]}m ${timeMatch[2]}s`;
+            }
+        }
+
+        // ── Witty loading messages ─────────────────────────────────────────────
+        const wittyMessages = [
+            "Teaching Sarvam to decode your sales pitch\u2026",
+            "Converting audio into business insights\u2026",
+            "Recognising every \u2018umm\u2019, \u2018hmm\u2019, and \u2018basically\u2019\u2026",
+            "Decoding Hinglish at the speed of thought\u2026",
+            "Sarvam is listening very carefully\u2026",
+            "Turning your pitch into text, one word at a time\u2026",
+            "Processing in the cloud so you don\u2019t have to\u2026",
+            "Finding the \u2018Rs. 50 lakhs ARR\u2019 moment in your call\u2026",
+            "Transcribing the part where you said \u2018just looping back\u2019\u2026",
+            "Handling Hindi, English, and everything in between\u2026",
+            "Unlike that prospect, Sarvam is actually paying attention\u2026",
+            "Still cheaper than hiring a human transcriptionist\u2026",
+            "Turning \u2018acha haan dekhtey hai\u2019 into readable text\u2026",
+            "No filler words are too embarrassing for us\u2026",
+            "Parsing your accent with respect and precision\u2026",
+            "Processing\u2026 while you wonder if you said \u2018synergy\u2019 again\u2026",
+            "Making sense of fast talkers since 2024\u2026",
+            "Your audio is in good hands. Indian ones, at that.",
+            "Honestly better than that intern who mishears everything\u2026",
+            "Converting silence and speech into equal parts wisdom\u2026",
+        ];
+        let wittyInterval = null;
+        let wittyIdx = Math.floor(Math.random() * wittyMessages.length);
+
+        function startWittyMessages() {
+            const el = document.getElementById('wittyText');
+            el.textContent = wittyMessages[wittyIdx];
+            el.style.opacity = '1';
+            wittyInterval = setInterval(() => {
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    wittyIdx = (wittyIdx + 1) % wittyMessages.length;
+                    el.textContent = wittyMessages[wittyIdx];
+                    el.style.opacity = '1';
+                }, 500);
+            }, 4000);
+        }
+
+        function stopWittyMessages() {
+            if (wittyInterval) { clearInterval(wittyInterval); wittyInterval = null; }
+            const el = document.getElementById('wittyText');
+            el.style.opacity = '0';
+        }
+
+        function startTimer() {
+            state.timerStart = Date.now();
+            const el = document.getElementById('elapsedTime');
+            state.timerInterval = setInterval(() => {
+                const s = Math.floor((Date.now() - state.timerStart) / 1000);
+                const m = Math.floor(s / 60);
+                const sec = s % 60;
+                el.textContent = m > 0 ? `${m}m ${sec.toString().padStart(2,'0')}s` : `${sec}s`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+        }
+
+        function showResultMeta(text) {
+            const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const readMin = Math.max(1, Math.round(words / 200));
+            const fmt = words >= 1000 ? (words / 1000).toFixed(1) + 'k' : words.toString();
+
+            document.getElementById('wordCountText').textContent = `${fmt} words`;
+            document.getElementById('metaWords').classList.remove('hidden');
+
+            document.getElementById('readTimeText').textContent = `~${readMin} min read`;
+            document.getElementById('metaRead').classList.remove('hidden');
+
+            if (state.elapsedStr) {
+                document.getElementById('durationText').textContent = `Transcribed in ${state.elapsedStr}`;
+                document.getElementById('metaDuration').classList.remove('hidden');
+            }
+        }
+
+        function appendLog(line) {
+            const div = document.createElement('div');
+            div.textContent = line;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+            parseLogSignals(line);
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+        }
+
+        function showValidationError(msg, hint) {
+            document.getElementById('uploadValidationText').textContent = msg;
+            document.getElementById('uploadValidationHint').textContent = hint || '';
+            document.getElementById('uploadValidationMsg').classList.remove('hidden');
+        }
+
+        function hideValidationError() {
+            document.getElementById('uploadValidationMsg').classList.add('hidden');
+        }
+
+        // ── Cost estimator ────────────────────────────────────────────────────
+        const RATE_PER_SECOND = 30 / 3600;  // ₹30/hour, billed per second
+
+        // Pure async: returns duration in seconds, or null if unreadable
+        function getFileDuration(file) {
+            return new Promise((resolve) => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'wav') {
+                    // WAV: parse header directly (browser <audio> often can't read WAV duration)
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const view = new DataView(e.target.result);
+                            const riff = String.fromCharCode(view.getUint8(0), view.getUint8(1), view.getUint8(2), view.getUint8(3));
+                            if (riff !== 'RIFF') throw new Error('not RIFF');
+                            const byteRate = view.getUint32(28, true);
+                            if (byteRate <= 0) throw new Error('bad byteRate');
+                            resolve((file.size - 44) / byteRate);
+                        } catch (_) { resolve(null); }
+                    };
+                    reader.onerror = () => resolve(null);
+                    reader.readAsArrayBuffer(file.slice(0, 128));
+                } else {
+                    // Other formats: use <audio> element metadata
+                    const audio = new Audio();
+                    const blobUrl = URL.createObjectURL(file);
+                    audio.preload = 'metadata';
+                    audio.addEventListener('loadedmetadata', () => {
+                        URL.revokeObjectURL(blobUrl);
+                        resolve(isFinite(audio.duration) && audio.duration > 0 ? audio.duration : null);
+                    });
+                    audio.addEventListener('error', () => { URL.revokeObjectURL(blobUrl); resolve(null); });
+                    audio.src = blobUrl;
+                }
+            });
+        }
+
+        async function estimateCumulativeCost(files) {
+            const el       = document.getElementById('costEstimate');
+            const durText  = document.getElementById('audioDurationText');
+            const costText = document.getElementById('costText');
+
+            el.classList.remove('hidden');
+            durText.textContent  = files.length > 1 ? 'Reading durations…' : 'Reading duration…';
+            costText.textContent = '';
+
+            const results = await Promise.allSettled(files.map(getFileDuration));
+            let totalSecs    = 0;
+            let unknownCount = 0;
+            results.forEach(r => {
+                if (r.status === 'fulfilled' && r.value !== null) totalSecs += r.value;
+                else unknownCount++;
+            });
+
+            if (totalSecs === 0 && unknownCount > 0) {
+                durText.textContent  = 'Duration unknown';
+                costText.textContent = '~₹30/hr';
+                return;
+            }
+
+            const m = Math.floor(totalSecs / 60);
+            const s = Math.round(totalSecs % 60);
+            let durLabel = m > 0 ? `${m}m ${s.toString().padStart(2, '0')}s` : `${s}s`;
+            if (unknownCount > 0) durLabel += ` (+ ${unknownCount} unknown)`;
+            durText.textContent = durLabel;
+
+            const cost = Math.ceil(totalSecs) * RATE_PER_SECOND;
+            costText.textContent = cost < 1 ? 'Est. cost: <₹1' : `Est. cost: ₹${cost.toFixed(2)}`;
+        }
+
+        function updateUploadProgress(pct) {
+            document.getElementById('uploadProgressPct').textContent  = pct + '%';
+            document.getElementById('uploadProgressFill').style.width = pct + '%';
+        }
+
+        function copyTranscript(event) {
+            if (!state.transcript) return;
+            navigator.clipboard.writeText(state.transcript).then(() => {
+                const btn = event.currentTarget;
+                const orig = btn.innerHTML;
+                btn.innerHTML = '\u2713 Copied!';
+                btn.classList.add('text-brand-400', 'border-brand-400/50');
+                setTimeout(() => {
+                    btn.innerHTML = orig;
+                    btn.classList.remove('text-brand-400', 'border-brand-400/50');
+                }, 1600);
+            });
+        }
+
+        function resetApp() {
+            if (state.xhr) { state.xhr.abort(); state.xhr = null; }
+            if (state.eventSource) {
+                state.eventSource.close();
+                state.eventSource = null;
+            }
+            stopTimer();
+            stopWittyMessages();
+            state.phase          = 'idle';
+            state.jobId          = null;
+            state.files          = [];
+            state.transcript     = null;
+            state.transcripts    = {};
+            state.diarization    = {};
+            state.analysis       = null;
+            state.analyses       = {};
+            state.analysisErrors = {};
+            state.speakerColorMap= {};
+            state.timerStart     = null;
+            state.jobStartTime   = null;
+            state.sseRetryCount  = 0;
+            state.currentStep    = 0;
+            state.elapsedStr     = '';
+            state.activeTab      = 'transcript';
+            state.activeFile     = null;
+            state.filenames      = [];
+            globalColorIdx       = 0;
+            downloadTxt.href     = '#';
+
+            fileInput.value = '';
+            dropLabel.innerHTML = `Drop audio files here, or <span class="text-brand-400 font-medium">click to select</span>`;
+            dropZone.classList.remove('border-brand-400/50', 'bg-brand-400/[0.03]', 'drop-active');
+
+            transcribeBtn.disabled  = true;
+            transcribeBtn.innerHTML = 'Transcribe';
+
+            logBox.innerHTML          = '';
+            transcriptBox.textContent = '';
+            errorMsg.textContent      = '';
+            document.getElementById('elapsedTime').textContent = '';
+
+            // Reset step indicator (4 steps)
+            ['stepUpload', 'stepSubmit', 'stepTranscribe', 'stepDone'].forEach(id => {
+                document.getElementById(id).className = 'step-dot';
+            });
+            ['line1', 'line2', 'line3'].forEach(id => {
+                document.getElementById(id).className = 'step-line';
+            });
+
+            // Reset file tabs
+            const fileTabs = document.getElementById('fileTabs');
+            fileTabs.innerHTML = '';
+            fileTabs.classList.add('hidden');
+
+            // Reset result metadata
+            ['metaWords','metaRead','metaDuration'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+
+            // Reset tabs and panels
+            ['tabSpeakers','tabSummary','tabKeywords'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            ['panelSpeakers','panelSummary','panelKeywords'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById('panelTranscript').classList.remove('hidden');
+            document.getElementById('tabTranscript').classList.add('active');
+            document.getElementById('analysisOverlay').classList.add('hidden');
+            document.getElementById('analysisError').classList.add('hidden');
+            document.getElementById('speakersContent').innerHTML = '';
+            document.getElementById('summaryContent').innerHTML  = '';
+            document.getElementById('keywordsContent').innerHTML = '';
+
+            stopWittyMessages();
+            document.getElementById('wittyText').textContent = '';
+
+            // Reset upload progress bar + cost estimate
+            document.getElementById('uploadProgressPct').textContent   = '0%';
+            document.getElementById('uploadProgressFill').style.width  = '0%';
+            document.getElementById('uploadProgressLabel').textContent = 'Uploading…';
+            document.getElementById('uploadProgressBar').classList.add('hidden');
+            document.getElementById('wittyMessage').classList.remove('hidden');
+            document.getElementById('costEstimate').classList.add('hidden');
+
+            statusBadge.innerHTML = '<span class="pulse-dot"></span>Running';
+            statusBadge.className = 'text-[11px] font-semibold px-3 py-1 rounded-full bg-brand-400/10 text-brand-400 border border-brand-400/20 flex items-center';
+
+            progressCard.classList.add('hidden');
+            resultCard.classList.add('hidden');
+            errorCard.classList.add('hidden');
+            document.getElementById('cancelBtn').classList.add('hidden');
+            hideValidationError();
+        }
+
+        function escHtml(str) {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        // ── Init ───────────────────────────────────────────────────────────────
+        loadTranscriptionSettings();
+        loadAiSettings();
+    </script>
+</body>
+</html>
